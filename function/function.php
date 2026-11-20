@@ -1,7 +1,14 @@
 <?php
+	// Konfigurasi koneksi dibaca dari environment variable (dipakai di Docker/VPS).
+	// Jika tidak diset, otomatis memakai default lama (localhost / root / tanpa password)
+	// sehingga tetap jalan di XAMPP/Laragon tanpa konfigurasi tambahan.
+	$dbHost = getenv('DB_HOST') !== false ? getenv('DB_HOST') : 'localhost';
+	$dbName = getenv('DB_NAME') !== false ? getenv('DB_NAME') : 'elearning';
+	$dbUser = getenv('DB_USER') !== false ? getenv('DB_USER') : 'root';
+	$dbPass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
 	try
 	{
-	$dbh = new PDO('mysql:host=localhost;dbname=elearning', "root", ""); //mengkonaksikan dengan database
+	$dbh = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass); //mengkoneksikan dengan database
 	
   	$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
 	}
@@ -106,7 +113,7 @@
 		$user = htmlspecialchars($data["user"]); //mengambil data user dari database
 
 		try{ 
-			$insert = $dbh->prepare("INSERT INTO kelas_user (ID_KELAS_USER, ID_KELAS, ID_USER) values ('', :kelas, :user)"); //query untuk memasukkan user ke kelas
+			$insert = $dbh->prepare("INSERT INTO kelas_user (ID_KELAS_USER, ID_KELAS, ID_USER) values (NULL, :kelas, :user)"); //query untuk memasukkan user ke kelas
 			$insert->bindValue(':kelas', $kelas);
 			$insert->bindValue(':user', $user);
 			$insert->execute(); //mengeksekusi query
@@ -142,12 +149,12 @@
 		$user = htmlspecialchars($data["user"]); //mengambil data user
 
 		try{ 
-			$insert = $dbh->prepare("INSERT INTO kelas (ID_KELAS, NAMA_KELAS, DESKRIPSI_KELAS) values ('', :namakelas, :deskripsikelas)"); //query untuk membuat kelas baru
+			$insert = $dbh->prepare("INSERT INTO kelas (ID_KELAS, NAMA_KELAS, DESKRIPSI_KELAS) values (NULL, :namakelas, :deskripsikelas)"); //query untuk membuat kelas baru
 			$insert->bindValue(':namakelas', $namakelas); 
 			$insert->bindValue(':deskripsikelas', $deskripsi);
 			$insert->execute(); //mengeksekusi query membuat kelas
 
-			$insert2 = $dbh->prepare("INSERT INTO kelas_user (ID_KELAS_USER, ID_KELAS, ID_USER) values ('', (SELECT MAX(ID_KELAS) FROM kelas), :user)"); //query untuk memasukkan dosen ke kelas yang baru dibuat
+			$insert2 = $dbh->prepare("INSERT INTO kelas_user (ID_KELAS_USER, ID_KELAS, ID_USER) values (NULL, (SELECT MAX(ID_KELAS) FROM kelas), :user)"); //query untuk memasukkan dosen ke kelas yang baru dibuat
 			$insert2->bindValue(':user', $user);
 			$insert2->execute(); //mengeksekusi query ke-2
 
@@ -188,7 +195,7 @@
 		$filemateri = uploadmateri(); //memanggil fungsi uploadmateri untuk mengupload materi pdf/word/ppt/excel
 
 		try{ 
-			$post = $dbh->prepare("INSERT INTO materi (ID_MATERI, ID_KELAS, ID_USER, JUDUL_MATERI, DESKRIPSI_MATERI, LINK_MATERI) values ('', :idkelas, :iduser, :judulmateri, :deskripsimateri, :filemateri)"); //query untuk menambahkan data ke tabel materi (menambahkan post)
+			$post = $dbh->prepare("INSERT INTO materi (ID_MATERI, ID_KELAS, ID_USER, JUDUL_MATERI, DESKRIPSI_MATERI, LINK_MATERI) values (NULL, :idkelas, :iduser, :judulmateri, :deskripsimateri, :filemateri)"); //query untuk menambahkan data ke tabel materi (menambahkan post)
 			$post->bindValue(':idkelas', $id_kelas);
 			$post->bindValue(':iduser', $id_user);
 			$post->bindValue(':judulmateri', $judulmateri);

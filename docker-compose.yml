@@ -1,0 +1,49 @@
+# Nama project dikunci supaya nama volume selalu eltru_db_data, eltru_uploads_*
+# (tidak tergantung nama folder tempat repo di-clone).
+name: eltru
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-elearning}
+      MYSQL_USER: ${DB_USER:-eltru}
+      MYSQL_PASSWORD: ${DB_PASS:?isi DB_PASS di file .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:?isi DB_ROOT_PASS di file .env}
+      TZ: Asia/Jakarta
+    volumes:
+      - db_data:/var/lib/mysql
+      # dijalankan otomatis hanya saat volume db_data pertama kali dibuat
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-elearning}
+      DB_USER: ${DB_USER:-eltru}
+      DB_PASS: ${DB_PASS}
+    ports:
+      # Default hanya listen di localhost. Di VPS taruh reverse proxy (Caddy/Nginx) di depannya.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8088}:80"
+    volumes:
+      # Upload user bertahan walau container di-rebuild.
+      # Saat volume baru dibuat, isinya otomatis terisi file bawaan image (foto & PDF contoh).
+      - uploads_user:/var/www/html/asset/user
+      - uploads_materi:/var/www/html/materi
+
+volumes:
+  db_data:
+  uploads_user:
+  uploads_materi:

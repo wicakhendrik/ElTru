@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.example
+.dockerignore
+Dockerfile
+docker-compose.yml
+database
+docs
+*.md
+asset/*.cdr
+asset/eltru.sql
